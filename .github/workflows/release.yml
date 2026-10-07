@@ -63,8 +63,9 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add Package.swift
           git commit -m "chore: release $TAG"
+          git pull --rebase origin main
           git tag "$TAG"
-          git push origin HEAD:main "$TAG"
+          git push --atomic origin HEAD:main "$TAG"
 
       - name: Publish release
         env:
