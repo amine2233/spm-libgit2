@@ -28,6 +28,8 @@
 #
 # Usage: bin/build_libgit2.sh
 
+set -euo pipefail
+
 SCRIPT_DIR=$(dirname $0)
 pushd $SCRIPT_DIR/.. > /dev/null
 ROOT_PATH=$PWD
@@ -66,8 +68,8 @@ do
             ;;
         
         "MACOS" )
-            OPENSSL_ROOT_DIR=$ROOT_PATH/build/openssl/mac
-            OPENSSL_LIBRARIES_DIR=$ROOT_PATH/build/openssl/mac64/lib
+            OPENSSL_ROOT_DIR=$ROOT_PATH/build/openssl/mac64
+            OPENSSL_LIBRARIES_DIR=$ROOT_PATH/build/openssl/mac/lib
             ;;
     esac
 
@@ -76,47 +78,40 @@ do
     OPENSSL_SSL_LIBRARY=$OPENSSL_LIBRARIES_DIR/libssl.a
     LIBSSH2_ROOT_DIR=$ROOT_PATH/build/libssh2/$PLATFORM
 
-    if [ $PLATFORM == "MACOS" ]
-    then
-        mkdir bin
-        cd bin
-        cmake \
-            -DCMAKE_INSTALL_PREFIX=$OUTPUT_PATH \
-            -DCMAKE_OSX_ARCHITECTURES="x86_64;arm64" \
-            -DOPENSSL_ROOT_DIR=$OPENSSL_ROOT_DIR \
-            -DOPENSSL_CRYPTO_LIBRARY=$OPENSSL_CRYPTO_LIBRARY \
-            -DOPENSSL_SSL_LIBRARY=$OPENSSL_SSL_LIBRARY \
-            -DOPENSSL_INCLUDE_DIR=$OPENSSL_INCLUDE_DIR \
-            -DUSE_SSH=OFF \
-            -DLIBSSH2_FOUND=TRUE \
-            -DLIBSSH2_INCLUDE_DIRS=$LIBSSH2_ROOT_DIR/include \
-            -DLIBSSH2_LIBRARY_DIRS=$LIBSSH2_ROOT_DIR/lib \
-            -DLIBSSH2_LIBRARIES="-L$LIBSSH2_ROOT_DIR/lib -L$OPENSSL_LIBRARIES_DIR -lssh2 -lssl -lcrypto" \
-            -DBUILD_SHARED_LIBS=OFF \
-            -DBUILD_CLAR=OFF \
-            .. >> $LOG 2>&1
-        cmake --build . --target install >> $LOG 2>&1
-    else
-        mkdir bin
-        cd bin
-        cmake \
-            -DCMAKE_TOOLCHAIN_FILE=$ROOT_PATH/External/cmake/iOS.cmake \
-            -DIOS_PLATFORM=$PLATFORM \
-            -DCMAKE_INSTALL_PREFIX=$OUTPUT_PATH \
-            -DOPENSSL_ROOT_DIR=$OPENSSL_ROOT_DIR \
-            -DOPENSSL_CRYPTO_LIBRARY=$OPENSSL_CRYPTO_LIBRARY \
-            -DOPENSSL_SSL_LIBRARY=$OPENSSL_SSL_LIBRARY \
-            -DOPENSSL_INCLUDE_DIR=$OPENSSL_INCLUDE_DIR \
-            -DUSE_SSH=OFF \
-            -DLIBSSH2_FOUND=TRUE \
-            -DLIBSSH2_INCLUDE_DIRS=$LIBSSH2_ROOT_DIR/include \
-            -DLIBSSH2_LIBRARY_DIRS=$LIBSSH2_ROOT_DIR/lib \
-            -DLIBSSH2_LIBRARIES="-L$LIBSSH2_ROOT_DIR/lib -L$OPENSSL_LIBRARIES_DIR -lssh2 -lssl -lcrypto" \
-            -DBUILD_SHARED_LIBS=OFF \
-            -DBUILD_CLAR=OFF \
-            .. >> $LOG 2>&1
-        cmake --build . --target install >> $LOG 2>&1
-    fi
+    case $PLATFORM in
+        "OS" )
+            PLATFORM_ARGS=(-DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphoneos -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_OSX_DEPLOYMENT_TARGET=13.0)
+            ;;
+        "SIMULATOR" )
+            PLATFORM_ARGS=(-DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphonesimulator -DCMAKE_OSX_ARCHITECTURES=x86_64 -DCMAKE_OSX_DEPLOYMENT_TARGET=13.0)
+            ;;
+        "CATALYST" )
+            PLATFORM_ARGS=(-DCMAKE_OSX_ARCHITECTURES=x86_64 "-DCMAKE_C_FLAGS=-target x86_64-apple-ios13.1-macabi")
+            ;;
+        "MACOS" )
+            PLATFORM_ARGS=(-DCMAKE_OSX_ARCHITECTURES="x86_64;arm64" -DCMAKE_OSX_DEPLOYMENT_TARGET=10.15)
+            ;;
+    esac
+
+    mkdir bin
+    cd bin
+    cmake \
+        "${PLATFORM_ARGS[@]}" \
+        -DCMAKE_INSTALL_PREFIX=$OUTPUT_PATH \
+        -DOPENSSL_ROOT_DIR=$OPENSSL_ROOT_DIR \
+        -DOPENSSL_CRYPTO_LIBRARY=$OPENSSL_CRYPTO_LIBRARY \
+        -DOPENSSL_SSL_LIBRARY=$OPENSSL_SSL_LIBRARY \
+        -DOPENSSL_INCLUDE_DIR=$OPENSSL_INCLUDE_DIR \
+        -DBUILD_SHARED_LIBS=OFF \
+        -DUSE_SSH=libssh2 \
+        -DUSE_HTTPS=OpenSSL \
+        -DPKG_CONFIG_EXECUTABLE=/usr/bin/false \
+        -DLIBSSH2_INCLUDE_DIR=$LIBSSH2_ROOT_DIR/include \
+        -DLIBSSH2_LIBRARY=$LIBSSH2_ROOT_DIR/lib/libssh2.a \
+        -DBUILD_TESTS=OFF \
+        -DBUILD_CLI=OFF \
+        .. >> $LOG 2>&1
+    cmake --build . --target install >> $LOG 2>&1
 
     popd > /dev/null
 done

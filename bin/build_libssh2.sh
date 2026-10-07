@@ -29,6 +29,8 @@
 
 # set -o xtrace
 
+set -euo pipefail
+
 SCRIPT_DIR=$(dirname $0)
 pushd $SCRIPT_DIR/.. > /dev/null
 ROOT_PATH=$PWD
@@ -78,39 +80,38 @@ do
 
     OPENSSL_INCLUDE_DIR=$OPENSSL_ROOT_DIR/include
 
-    if [ $PLATFORM == "MACOS" ]
-    then
-        mkdir bin
-        cd bin
-        cmake \
-            -DCMAKE_INSTALL_PREFIX=$OUTPUT_PATH \
-            -DCMAKE_OSX_ARCHITECTURES="x86_64;arm64" \
-            -DCRYPTO_BACKEND=OpenSSL \
-            -DOPENSSL_ROOT_DIR=$OPENSSL_ROOT_DIR \
-            -DOPENSSL_CRYPTO_LIBRARY=$OPENSSL_CRYPTO_LIBRARY \
-            -DOPENSSL_SSL_LIBRARY=$OPENSSL_SSL_LIBRARY \
-            -DOPENSSL_INCLUDE_DIR=$OPENSSL_INCLUDE_DIR \
-            .. >> $LOG 2>&1
-        cmake --build . --target install >> $LOG 2>&1
+    case $PLATFORM in
+        "OS" )
+            PLATFORM_ARGS=(-DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphoneos -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_OSX_DEPLOYMENT_TARGET=13.0)
+            ;;
+        "SIMULATOR" )
+            PLATFORM_ARGS=(-DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphonesimulator -DCMAKE_OSX_ARCHITECTURES=x86_64 -DCMAKE_OSX_DEPLOYMENT_TARGET=13.0)
+            ;;
+        "CATALYST" )
+            PLATFORM_ARGS=(-DCMAKE_OSX_ARCHITECTURES=x86_64 "-DCMAKE_C_FLAGS=-target x86_64-apple-ios13.1-macabi")
+            ;;
+        "MACOS" )
+            PLATFORM_ARGS=(-DCMAKE_OSX_ARCHITECTURES="x86_64;arm64" -DCMAKE_OSX_DEPLOYMENT_TARGET=10.15)
+            ;;
+    esac
 
-        popd > /dev/null
-    else
-        mkdir bin
-        cd bin
-        cmake \
-            -DCMAKE_TOOLCHAIN_FILE=$ROOT_PATH/External/cmake/iOS.cmake \
-            -DIOS_PLATFORM=$PLATFORM \
-            -DCMAKE_INSTALL_PREFIX=$OUTPUT_PATH \
-            -DCRYPTO_BACKEND=OpenSSL \
-            -DOPENSSL_ROOT_DIR=$OPENSSL_ROOT_DIR \
-            -DOPENSSL_CRYPTO_LIBRARY=$OPENSSL_CRYPTO_LIBRARY \
-            -DOPENSSL_SSL_LIBRARY=$OPENSSL_SSL_LIBRARY \
-            -DOPENSSL_INCLUDE_DIR=$OPENSSL_INCLUDE_DIR \
-            .. >> $LOG 2>&1
-        cmake --build . --target install >> $LOG 2>&1
+    mkdir bin
+    cd bin
+    cmake \
+        "${PLATFORM_ARGS[@]}" \
+        -DCMAKE_INSTALL_PREFIX=$OUTPUT_PATH \
+        -DOPENSSL_ROOT_DIR=$OPENSSL_ROOT_DIR \
+        -DOPENSSL_CRYPTO_LIBRARY=$OPENSSL_CRYPTO_LIBRARY \
+        -DOPENSSL_SSL_LIBRARY=$OPENSSL_SSL_LIBRARY \
+        -DOPENSSL_INCLUDE_DIR=$OPENSSL_INCLUDE_DIR \
+        -DBUILD_SHARED_LIBS=OFF \
+        -DCRYPTO_BACKEND=OpenSSL \
+        -DBUILD_EXAMPLES=OFF \
+        -DBUILD_TESTING=OFF \
+        .. >> $LOG 2>&1
+    cmake --build . --target install >> $LOG 2>&1
 
-        popd > /dev/null
-    fi
+    popd > /dev/null
 done
 
 echo "Creating the XCFramework"

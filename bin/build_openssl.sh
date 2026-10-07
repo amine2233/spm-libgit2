@@ -27,6 +27,8 @@
 #
 # Usage: bin/build.sh
 
+set -euo pipefail
+
 SCRIPT_DIR=$(dirname $0)
 pushd $SCRIPT_DIR/.. > /dev/null
 ROOT_PATH=$PWD
@@ -91,7 +93,6 @@ mkdir -p $LIB_PATH
 xcodebuild -create-xcframework \
     -library $ROOT_PATH/build/openssl/lib/libcrypto.a \
     -library $ROOT_PATH/build/openssl/iossimulator/lib/libcrypto.a \
-    -library $ROOT_PATH/build/openssl/catalyst/lib/libcrypto.a \
     -library $ROOT_PATH/build/openssl/catalyst/lib/libcrypto.a \
     -library $ROOT_PATH/build/openssl/mac/lib/libcrypto.a \
     -output $LIBCRYPTO_PATH
