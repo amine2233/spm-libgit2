@@ -34,7 +34,7 @@ pushd $SCRIPT_DIR/.. > /dev/null
 ROOT_PATH=$PWD
 popd > /dev/null
 
-CONFIGURATIONS="ios64 iossimulator catalyst mac64 macarm64"
+CONFIGURATIONS="ios64 iossimulator-x86_64 iossimulator-arm64 catalyst-x86_64 catalyst-arm64 mac64 macarm64"
 for CONFIGURATION in $CONFIGURATIONS
 do
     echo "Building OpenSSL for $CONFIGURATION"
@@ -65,6 +65,23 @@ rm -rf $OUTPUT_PATH
 mkdir -p $OUTPUT_PATH
 cp $ROOT_PATH/build/openssl/ios64/lib/libcrypto.a $OUTPUT_PATH/libcrypto.a
 cp $ROOT_PATH/build/openssl/ios64/lib/libssl.a $OUTPUT_PATH/libssl.a
+
+for UNIVERSAL in iossimulator catalyst
+do
+    echo "Creating the universal library for $UNIVERSAL"
+
+    OUTPUT_PATH=$ROOT_PATH/build/openssl/$UNIVERSAL
+    rm -rf $OUTPUT_PATH
+    mkdir -p $OUTPUT_PATH/lib
+    cp -R $ROOT_PATH/build/openssl/$UNIVERSAL-x86_64/include $OUTPUT_PATH/include
+    for LIB in libcrypto libssl
+    do
+        lipo -create \
+            $ROOT_PATH/build/openssl/$UNIVERSAL-x86_64/lib/$LIB.a \
+            $ROOT_PATH/build/openssl/$UNIVERSAL-arm64/lib/$LIB.a \
+            -output $OUTPUT_PATH/lib/$LIB.a
+    done
+done
 
 echo "Creating the universal library for macOS"
 

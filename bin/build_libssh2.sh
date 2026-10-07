@@ -36,7 +36,7 @@ pushd $SCRIPT_DIR/.. > /dev/null
 ROOT_PATH=$PWD
 popd > /dev/null
 
-PLATFORMS="OS SIMULATOR CATALYST MACOS"
+PLATFORMS="OS SIMULATOR CATALYST_X86_64 CATALYST_ARM64 MACOS"
 for PLATFORM in $PLATFORMS
 do
     echo "Building libssh2 for $PLATFORM"
@@ -65,7 +65,7 @@ do
             OPENSSL_SSL_LIBRARY=$OPENSSL_ROOT_DIR/lib/libssl.a
             ;;
 
-        "CATALYST" )
+        CATALYST* )
             OPENSSL_ROOT_DIR=$ROOT_PATH/build/openssl/catalyst
             OPENSSL_CRYPTO_LIBRARY=$OPENSSL_ROOT_DIR/lib/libcrypto.a
             OPENSSL_SSL_LIBRARY=$OPENSSL_ROOT_DIR/lib/libssl.a
@@ -85,10 +85,13 @@ do
             PLATFORM_ARGS=(-DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphoneos -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_OSX_DEPLOYMENT_TARGET=13.0)
             ;;
         "SIMULATOR" )
-            PLATFORM_ARGS=(-DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphonesimulator -DCMAKE_OSX_ARCHITECTURES=x86_64 -DCMAKE_OSX_DEPLOYMENT_TARGET=13.0)
+            PLATFORM_ARGS=(-DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphonesimulator "-DCMAKE_OSX_ARCHITECTURES=x86_64;arm64" -DCMAKE_OSX_DEPLOYMENT_TARGET=13.0)
             ;;
-        "CATALYST" )
+        "CATALYST_X86_64" )
             PLATFORM_ARGS=(-DCMAKE_OSX_ARCHITECTURES=x86_64 "-DCMAKE_C_FLAGS=-target x86_64-apple-ios13.1-macabi")
+            ;;
+        "CATALYST_ARM64" )
+            PLATFORM_ARGS=(-DCMAKE_OSX_ARCHITECTURES=arm64 "-DCMAKE_C_FLAGS=-target arm64-apple-ios13.1-macabi")
             ;;
         "MACOS" )
             PLATFORM_ARGS=(-DCMAKE_OSX_ARCHITECTURES="x86_64;arm64" -DCMAKE_OSX_DEPLOYMENT_TARGET=10.15)
@@ -113,6 +116,17 @@ do
 
     popd > /dev/null
 done
+
+echo "Creating the universal Catalyst library"
+
+CATALYST_PATH=$ROOT_PATH/build/libssh2/CATALYST
+rm -rf $CATALYST_PATH
+mkdir -p $CATALYST_PATH/lib
+cp -R $ROOT_PATH/build/libssh2/CATALYST_X86_64/include $CATALYST_PATH/include
+lipo -create \
+    $ROOT_PATH/build/libssh2/CATALYST_X86_64/lib/libssh2.a \
+    $ROOT_PATH/build/libssh2/CATALYST_ARM64/lib/libssh2.a \
+    -output $CATALYST_PATH/lib/libssh2.a
 
 echo "Creating the XCFramework"
 
