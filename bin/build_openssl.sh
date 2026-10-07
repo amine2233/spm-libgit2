@@ -32,7 +32,7 @@ pushd $SCRIPT_DIR/.. > /dev/null
 ROOT_PATH=$PWD
 popd > /dev/null
 
-CONFIGURATIONS="ios ios64 iossimulator catalyst mac64 macarm64"
+CONFIGURATIONS="ios64 iossimulator catalyst mac64 macarm64"
 for CONFIGURATION in $CONFIGURATIONS
 do
     echo "Building OpenSSL for $CONFIGURATION"
@@ -61,14 +61,8 @@ echo "Creating the universal library for iOS"
 OUTPUT_PATH=$ROOT_PATH/build/openssl/lib
 rm -rf $OUTPUT_PATH
 mkdir -p $OUTPUT_PATH
-lipo -create \
-    $ROOT_PATH/build/openssl/ios/lib/libcrypto.a \
-    $ROOT_PATH/build/openssl/ios64/lib/libcrypto.a \
-    -output $OUTPUT_PATH/libcrypto.a
-lipo -create \
-    $ROOT_PATH/build/openssl/ios/lib/libssl.a \
-    $ROOT_PATH/build/openssl/ios64/lib/libssl.a \
-    -output $OUTPUT_PATH/libssl.a
+cp $ROOT_PATH/build/openssl/ios64/lib/libcrypto.a $OUTPUT_PATH/libcrypto.a
+cp $ROOT_PATH/build/openssl/ios64/lib/libssl.a $OUTPUT_PATH/libssl.a
 
 echo "Creating the universal library for macOS"
 
@@ -104,7 +98,7 @@ xcodebuild -create-xcframework \
 
 xcodebuild -create-xcframework \
     -library $ROOT_PATH/build/openssl/lib/libssl.a \
-    -headers $ROOT_PATH/build/openssl/ios/include \
+    -headers $ROOT_PATH/build/openssl/ios64/include \
     -library $ROOT_PATH/build/openssl/iossimulator/lib/libssl.a \
     -headers $ROOT_PATH/build/openssl/iossimulator/include \
     -library $ROOT_PATH/build/openssl/catalyst/lib/libssl.a \

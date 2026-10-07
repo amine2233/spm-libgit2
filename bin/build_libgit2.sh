@@ -51,7 +51,7 @@ do
 
     case $PLATFORM in
         "OS" )
-            OPENSSL_ROOT_DIR=$ROOT_PATH/build/openssl/ios
+            OPENSSL_ROOT_DIR=$ROOT_PATH/build/openssl/ios64
             OPENSSL_LIBRARIES_DIR=$ROOT_PATH/build/openssl/lib
             ;;
 

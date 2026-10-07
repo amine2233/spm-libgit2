@@ -1,0 +1,65 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Release tag (defaults to the libgit2 submodule version, without the leading v)
+        required: false
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    if: github.ref == 'refs/heads/main'
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: recursive
+
+      - name: Resolve tag
+        run: |
+          TAG="${{ inputs.release_tag }}"
+          TAG="${TAG:-$(git -C External/libgit2 describe --tags | sed 's/^v//')}"
+          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null; then
+            echo "Tag $TAG already exists" >&2; exit 1
+          fi
+          echo "TAG=$TAG" >> "$GITHUB_ENV"
+
+      - name: Build
+        run: |
+          bin/build_openssl.sh
+          bin/build_libssh2.sh
+          bin/build_libgit2.sh
+
+      - name: Upload build logs on failure
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: build-logs
+          path: /tmp/*.log
+
+      - name: Create draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$TAG" --draft --target "$GITHUB_SHA" --title "$TAG" \
+            --notes "$(git submodule status | sed 's/^.\{41\}//')" \
+            lib/libgit2.zip lib/libssh2.zip lib/libssl.zip lib/libcrypto.zip
+
+      - name: Generate Package.swift, commit and tag
+        run: |
+          bin/generate_package.sh "$TAG"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Package.swift
+          git commit -m "chore: release $TAG"
+          git tag "$TAG"
+          git push origin HEAD:main "$TAG"
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release edit "$TAG" --draft=false --verify-tag

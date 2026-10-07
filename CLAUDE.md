@@ -19,5 +19,6 @@ CI builds everything; nothing is built or released by hand:
 ## Current state
 
 - `bin/build_openssl.sh` → `build_libssh2.sh` → `build_libgit2.sh` → `build_spm.sh` (checksums) are the legacy Apple-only scripts, and they run in that order. They are the starting point for the CI jobs. They need `cmake`, `xcodebuild` and `lipo`, and write logs to `/tmp/<lib>-<PLATFORM>.log`.
-- Sources (`External/libgit2`, `libssh2`, `openssl`, `cmake/iOS.cmake`) were git submodules that were removed. CI must fetch them (pinned versions).
-- No CI workflow exists yet. Linux is not supported yet and not planned.
+- Sources are git submodules (`External/libgit2`, `libssh2`, `openssl`); the pinned commit is the version. To bump: `git -C External/<lib> fetch --tags && git -C External/<lib> checkout <tag>`, then commit. `External/cmake/iOS.cmake` and `External/openssl-config/` are vendored.
+- `.github/workflows/release.yml` (manual, main only) builds, regenerates `Package.swift` via `bin/generate_package.sh`, tags and publishes a release. Design: `docs/proposals/0001-*.md`. Untested until the first run.
+- Linux is not supported yet and not planned.
