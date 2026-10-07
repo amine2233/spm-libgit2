@@ -58,5 +58,3 @@ bin/generate_package.sh <tag>   # rewrites Package.swift, discard with git check
 ```
 
 Logs are written to `/tmp/<lib>-<PLATFORM>.log`.
-
-Design and decisions: [docs/proposals/0001-manual-ci-release-pipeline-for-libgit2-spm-binaries.md](docs/proposals/0001-manual-ci-release-pipeline-for-libgit2-spm-binaries.md).
