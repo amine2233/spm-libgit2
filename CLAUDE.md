@@ -27,6 +27,6 @@ CI builds everything; nothing is built or released by hand:
 
 Design proposals/ADRs live in Notion, never under `docs/` in this repo. Create new ones as pages in `proposal_database` and link them to this project via the `Project` relation.
 
-- Project page `spm-libgit2` (`proposal_project_database`; Repository: https://github.com/amine2233/libgit2-spm): https://app.notion.com/p/3f25ab33ba8e800caf1aedeccdb05e2b
+- Project page `spm-libgit2` (`proposal_project_database`; Repository: https://github.com/amine2233/spm-libgit2): https://app.notion.com/p/3f25ab33ba8e800caf1aedeccdb05e2b
 - `proposal_project_database`: https://app.notion.com/p/61400aa381b0427c8234362f48b4a96e (data source `collection://08585a1d-6e28-4505-a40d-8420ed12e3b6`)
 - `proposal_database`: https://app.notion.com/p/f27ffb1fd8c14025aec182840c0c8990 (data source `collection://f62aaef9-b201-464e-8c0b-160023363a98`); properties: Name, Category (Architecture/Feature/Tooling/Other), Project, Status

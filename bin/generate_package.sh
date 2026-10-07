@@ -4,7 +4,7 @@ set -euo pipefail
 # Usage: bin/generate_package.sh <release-tag>
 TAG=${1:?release tag required}
 ROOT_PATH=$(cd "$(dirname "$0")/.." && pwd)
-BASE_URL="https://github.com/${GITHUB_REPOSITORY:-amine2233/libgit2-spm}/releases/download/$TAG"
+BASE_URL="https://github.com/${GITHUB_REPOSITORY:-amine2233/spm-libgit2}/releases/download/$TAG"
 
 target() {
     printf '\t\t.binaryTarget(\n\t\t\tname: "%s",\n\t\t\turl: "%s/%s.zip",\n\t\t\tchecksum: "%s"\n\t\t),\n' \

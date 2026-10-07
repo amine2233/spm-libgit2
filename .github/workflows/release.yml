@@ -22,7 +22,14 @@ jobs:
       - name: Resolve tag
         run: |
           TAG="${{ inputs.release_tag }}"
-          TAG="${TAG:-$(git -C External/libgit2 describe --tags | sed 's/^v//')}"
+          if [ -z "$TAG" ]; then
+            SHA=$(git -C External/libgit2 rev-parse HEAD)
+            TAG=$(git ls-remote --tags https://github.com/libgit2/libgit2.git "refs/tags/v*" |
+              awk -v sha="$SHA" '$1 == sha { sub("refs/tags/v", "", $2); sub(/\^\{\}$/, "", $2); print $2; exit }')
+          fi
+          if [ -z "$TAG" ]; then
+            echo "External/libgit2 is not on a release tag; pass release_tag" >&2; exit 1
+          fi
           if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null; then
             echo "Tag $TAG already exists" >&2; exit 1
           fi

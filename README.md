@@ -1,4 +1,4 @@
-# libgit2-spm
+# spm-libgit2
 
 libgit2 with libssh2 and OpenSSL (`libssl`, `libcrypto`) as prebuilt XCFrameworks for Swift Package Manager.
 
@@ -7,11 +7,11 @@ Platforms: iOS 13+ (device arm64, simulator x86_64 + arm64), Mac Catalyst (x86_6
 ## Usage
 
 ```swift
-.package(url: "https://github.com/amine2233/libgit2-spm", from: "<release tag>")
+.package(url: "https://github.com/amine2233/spm-libgit2", from: "<release tag>")
 ```
 
 ```swift
-.product(name: "libgit2", package: "libgit2-spm")
+.product(name: "libgit2", package: "spm-libgit2")
 ```
 
 ## Release a new version
